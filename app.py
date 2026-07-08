@@ -212,20 +212,26 @@ elif pagina == "📊 Dashboard":
 
     try:
         # CASH-IN
-        res = sb.table("cashin").select("AMOUNT, FEE, LUCRO FINAL, STATUS").eq("STATUS", "PROCESSED").execute()
+        res = sb.table("cashin").select("AMOUNT,FEE,STATUS").eq("STATUS", "PROCESSED").execute()
         df_ci = pd.DataFrame(res.data)
+        res_lucro = sb.table("cashin").select("LUCRO FINAL").eq("STATUS", "PROCESSED").execute()
+        df_lucro_ci = pd.DataFrame(res_lucro.data)
         with col1:
             st.metric("💰 CASH-IN Receita (FEE)", f"R$ {pd.to_numeric(df_ci['FEE'], errors='coerce').sum():,.2f}")
         with col2:
-            st.metric("📈 CASH-IN Lucro Final", f"R$ {pd.to_numeric(df_ci['LUCRO FINAL'], errors='coerce').sum():,.2f}")
+            lucro_ci = pd.to_numeric(df_lucro_ci.get("LUCRO FINAL", pd.Series()), errors='coerce').sum() if not df_lucro_ci.empty else 0
+            st.metric("📈 CASH-IN Lucro Final", f"R$ {lucro_ci:,.2f}")
 
         # CASH-OUT
-        res2 = sb.table("cashout").select("COMMISSION, LUCRO FINAL, STATUS").eq("STATUS", "SUCCESSFULLY PROCESSED").execute()
+        res2 = sb.table("cashout").select("COMMISSION,STATUS").eq("STATUS", "SUCCESSFULLY PROCESSED").execute()
         df_co = pd.DataFrame(res2.data)
+        res_lucro2 = sb.table("cashout").select("LUCRO FINAL").eq("STATUS", "SUCCESSFULLY PROCESSED").execute()
+        df_lucro_co = pd.DataFrame(res_lucro2.data)
         with col3:
             st.metric("💸 CASH-OUT Receita", f"R$ {pd.to_numeric(df_co['COMMISSION'], errors='coerce').sum():,.2f}")
         with col4:
-            st.metric("📈 CASH-OUT Lucro Final", f"R$ {pd.to_numeric(df_co['LUCRO FINAL'], errors='coerce').sum():,.2f}")
+            lucro_co = pd.to_numeric(df_lucro_co.get("LUCRO FINAL", pd.Series()), errors='coerce').sum() if not df_lucro_co.empty else 0
+            st.metric("📈 CASH-OUT Lucro Final", f"R$ {lucro_co:,.2f}")
 
     except Exception as e:
         st.error(f"Erro ao carregar dashboard: {e}")
